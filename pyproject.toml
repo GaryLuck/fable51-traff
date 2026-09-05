@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "traffic-idm"
+version = "0.1.0"
+description = "Highway traffic simulation with the Intelligent Driver Model and adaptive entrance signals (ramp metering)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "matplotlib>=3.7"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+traffic-idm = "traffic_idm.experiment:main"
+
+[tool.setuptools.packages.find]
+include = ["traffic_idm*"]
+
+[tool.pytest.ini_options]
+markers = ["slow: long-running end-to-end scenario tests"]

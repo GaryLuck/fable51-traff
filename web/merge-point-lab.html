@@ -1,0 +1,356 @@
+<title>Merge Point Lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#eceef1; --panel:#ffffff; --panel2:#f5f6f8; --line:#d3d8de; --ink:#1b2430; --muted:#5d6b78;
+  --accent:#d9931a; --accent-ink:#7a4f05; --road:#2b3138; --road-line:#c9ced4; --focus:#2f6fd6;
+  --good:#1a9850; --warn:#e0a10f; --bad:#d73027;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#12161b; --panel:#1b2027; --panel2:#222831; --line:#323a44; --ink:#e7ebef; --muted:#97a3af;
+    --accent:#f0a929; --accent-ink:#ffd48a; --road:#0c0f13; --road-line:#3f4750; --focus:#7fb0ff;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#12161b; --panel:#1b2027; --panel2:#222831; --line:#323a44; --ink:#e7ebef; --muted:#97a3af;
+  --accent:#f0a929; --accent-ink:#ffd48a; --road:#0c0f13; --road-line:#3f4750; --focus:#7fb0ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:Barlow,"Helvetica Neue",Arial,sans-serif;font-size:14px;line-height:1.45}
+h1,h2,h3{font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;margin:0;text-wrap:balance;letter-spacing:.01em}
+h1{font-size:30px;font-weight:700;text-transform:uppercase}
+h2{font-size:18px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.mono{font-family:"IBM Plex Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+header{display:flex;align-items:baseline;gap:18px;padding:18px 24px 10px;flex-wrap:wrap}
+header p{margin:0;color:var(--muted);max-width:62ch}
+.wrap{display:grid;grid-template-columns:270px 1fr;gap:16px;padding:0 24px 28px}
+@media (max-width:980px){.wrap{grid-template-columns:1fr}}
+.rail{background:var(--panel);border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:18px;align-self:start;position:sticky;top:12px}
+.group{display:flex;flex-direction:column;gap:10px}
+.group h2{color:var(--muted);font-size:13px}
+label.ctl{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center}
+label.ctl span.name{font-weight:500}
+label.ctl span.val{color:var(--accent-ink);font-size:13px}
+label.ctl input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent);margin:0}
+select,button,input[type=number]{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);padding:6px 9px;border-radius:3px}
+button{cursor:pointer;font-weight:600}
+button.primary{background:var(--accent);border-color:var(--accent);color:#1b1408}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btnrow button{flex:1}
+.hint{color:var(--muted);font-size:12.5px;margin:0}
+.clock{font-size:26px;font-weight:500}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0}
+@media (max-width:1240px){.panels{grid-template-columns:1fr}}
+.sim{background:var(--panel);border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.sim .head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.sim .head .rate{color:var(--muted);font-size:13px}
+.signal{display:inline-flex;align-items:center;gap:6px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.signal i{width:10px;height:10px;border-radius:50%;background:var(--line);display:inline-block}
+.signal.on i{background:var(--bad)}
+.signal.go i{background:var(--good)}
+canvas{display:block;width:100%;height:auto}
+.road{background:var(--road);border-radius:2px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kpi{background:var(--panel2);border-top:2px solid var(--line);padding:6px 8px}
+.kpi.lift{border-top-color:var(--accent)}
+.kpi .n{font-size:20px;font-weight:500;line-height:1.1}
+.kpi .l{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+.legend{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.legend .bar{flex:0 0 120px;height:8px;background:linear-gradient(90deg,#d73027,#fee08b,#1a9850);border-radius:2px}
+.note{grid-column:1/-1;background:var(--panel);border:1px solid var(--line);padding:14px 16px;color:var(--muted);max-width:none}
+.note p{margin:0 0 6px;max-width:95ch}
+.note strong{color:var(--ink)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<header>
+  <h1>Merge Point Lab</h1>
+  <p>One highway lane, one on-ramp, the Intelligent Driver Model. The two runs share identical arrivals; only the entrance signal differs. Watch the merge break down at the dashed line, then see what the signal does about it.</p>
+</header>
+
+<div class="wrap">
+  <aside class="rail">
+    <div class="group">
+      <div class="clock mono" id="clock">00:00</div>
+      <div class="btnrow">
+        <button class="primary" id="run">Run</button>
+        <button id="reset">Reset</button>
+      </div>
+      <label class="ctl"><span class="name">Playback</span><span class="val" id="speedVal">60×</span>
+        <input type="range" id="speed" min="10" max="300" step="10" value="60"></label>
+    </div>
+
+    <div class="group">
+      <h2>Demand · surge 10–30 min</h2>
+      <label class="ctl"><span class="name">Mainline base</span><span class="val mono" id="mbVal">1250 veh/h</span>
+        <input type="range" id="mb" min="600" max="1600" step="50" value="1250"></label>
+      <label class="ctl"><span class="name">Mainline surge</span><span class="val mono" id="mpVal">1600 veh/h</span>
+        <input type="range" id="mp" min="800" max="1900" step="50" value="1600"></label>
+      <label class="ctl"><span class="name">Ramp base</span><span class="val mono" id="rbVal">200 veh/h</span>
+        <input type="range" id="rb" min="0" max="600" step="50" value="200"></label>
+      <label class="ctl"><span class="name">Ramp surge</span><span class="val mono" id="rpVal">600 veh/h</span>
+        <input type="range" id="rp" min="100" max="1000" step="50" value="600"></label>
+    </div>
+
+    <div class="group">
+      <h2>Entrance signal (right run)</h2>
+      <select id="ctrl">
+        <option value="alinea" selected>ALINEA adaptive</option>
+        <option value="fixed">Fixed rate</option>
+      </select>
+      <label class="ctl" id="fixedRow" hidden><span class="name">Release rate</span><span class="val mono" id="frVal">400 veh/h</span>
+        <input type="range" id="fr" min="100" max="1200" step="50" value="400"></label>
+      <label class="ctl" id="tgtRow"><span class="name">Target density</span><span class="val mono" id="tgtVal">24 veh/km</span>
+        <input type="range" id="tgt" min="12" max="40" step="1" value="24"></label>
+      <label class="ctl" id="gainRow"><span class="name">Feedback gain</span><span class="val mono" id="gainVal">60</span>
+        <input type="range" id="gain" min="10" max="150" step="10" value="60"></label>
+      <p class="hint">ALINEA: each 30 s, rate += gain × (target − measured density). Critical density for this IDM is 27 veh/km; capacity 1836 veh/h.</p>
+    </div>
+
+    <div class="group">
+      <label class="ctl"><span class="name">Random seed</span><span></span>
+        <input type="number" id="seed" value="1" min="0" max="9999" style="grid-column:1/-1"></label>
+      <p class="hint">Changes to demand or the signal take effect on Reset.</p>
+    </div>
+  </aside>
+
+  <main class="panels" id="panels"></main>
+
+  <section class="note">
+    <p><strong>What the model does.</strong> Vehicles follow the IDM with Treiber's unstable parameter set (120 km/h desired speed, 1.5 s headway, 0.73 m/s² acceleration, 1.67 m/s² comfortable braking). Ramp vehicles look for a gap along a 250 m acceleration lane and merge if nobody has to brake harder than 3 m/s²; after 6 s of waiting they force their way in. Those forced merges seed the breakdown, and once the merge is congested its discharge drops from 1836 to about 1570 veh/h, so the jam outlives the surge.</p>
+    <p><strong>What the signal does.</strong> A detector 100–400 m past the merge measures density every 30 s. ALINEA raises the release rate while density is below target and cuts it when above, holding the merge just under the critical point so it keeps flowing at capacity. The cost is a queue on the ramp; the payoff is total time spent, which counts ramp waiting too.</p>
+  </section>
+</div>
+
+<script>
+(() => {
+// ---------- model ----------
+const P = {v0:33.3, T:1.5, a:0.73, b:1.67, s0:2, delta:4, len:5, bmax:9};
+const CFG = {L:6000, xr:3000, accel:250, det0:3100, det1:3400, dt:0.1, dur:5400, vmerge:30, mdec:3, fdec:9, patience:6, fslot:0.25, rec:5, cell:100, ctrlInt:30};
+const SQAB = 2*Math.sqrt(P.a*P.b);
+function idm(v, dv, s){
+  const ss = P.s0 + Math.max(0, v*P.T + v*dv/SQAB);
+  const sf = Math.max(s, 0.1);
+  const acc = P.a*(1 - Math.pow(v/P.v0, P.delta) - (ss/sf)*(ss/sf));
+  return Math.min(P.a, Math.max(-P.bmax, acc));
+}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function poisson(rng, lam){let l=Math.exp(-lam),k=0,p=1;do{k++;p*=rng()}while(p>l);return k-1}
+function profile(base, peak){ // veh/h at time t (s): surge 600–1800 s with 120 s ramps
+  return t => {
+    if(t<600||t>1800) return base;
+    if(t<720) return base+(peak-base)*(t-600)/120;
+    if(t>1680) return base+(peak-base)*(1800-t)/120;
+    return peak;
+  };
+}
+class Sim{
+  constructor(opts){
+    this.o = opts; this.rng = mulberry32(opts.seed);
+    this.veh = []; // sorted ascending x; last = most downstream
+    this.mainQ = []; this.rampQ = []; this.released = null; this.lastRel = -1e9;
+    this.t = 0; this.k = 0; this.forced = 0; this.entered = 0;
+    this.exits = 0; this.travelSum = 0; this.rate = opts.ctrl.init();
+    this.detAcc = 0; this.detN = 0; this.density = 0;
+    this.nCells = CFG.L/CFG.cell; this.cols = []; this.maxRampQ = 0; this.congested = 0; this.samples = 0;
+    this.onRoadTime = 0; this.queueTime = 0;
+  }
+  insert(x, v, origin, ta){
+    let i = 0; while(i<this.veh.length && this.veh[i].x < x) i++;
+    this.veh.splice(i, 0, {x, v, o:origin, ta}); this.entered++;
+  }
+  entry(){
+    while(this.mainQ.length){
+      let v = P.v0;
+      if(this.veh.length){
+        const f = this.veh[0], gap = f.x - P.len; v = Math.min(P.v0, f.v);
+        if(gap < P.s0 + v*P.T) return;
+      }
+      this.insert(0, v, 0, this.mainQ.shift());
+    }
+  }
+  release(){
+    if(this.released || !this.rampQ.length) return;
+    if(!isFinite(this.rate)){ this.released = {ta:this.rampQ.shift(), tr:this.t}; return; }
+    if(this.t - this.lastRel >= 3600/Math.max(this.rate,1e-9)){ this.released = {ta:this.rampQ.shift(), tr:this.t}; this.lastRel = this.t; }
+  }
+  merge(){
+    if(!this.released) return;
+    const x0 = CFG.xr, x1 = CFG.xr+CFG.accel, V = this.veh, n = V.length;
+    const forced = (this.t - this.released.tr) > CFG.patience;
+    const limit = -(forced ? CFG.fdec : CFG.mdec), slot = forced ? CFG.fslot : 0.5;
+    if(n===0){ this.insert(x0, CFG.vmerge, 1, this.released.ta); this.released=null; return; }
+    let lo = 0; while(lo<n && V[lo].x < x0) lo++;
+    let hi = lo; while(hi<n && V[hi].x <= x1) hi++;
+    let best=null, bestM=-Infinity;
+    for(let i=lo;i<=Math.min(hi,n);i++){
+      const xl = i<n ? V[i].x : Infinity, xf = i>0 ? V[i-1].x : -Infinity;
+      const vl = i<n ? V[i].v : P.v0, vf = i>0 ? V[i-1].v : P.v0;
+      if(xl<=x0 || xf>=x1) continue;
+      const mid = 0.5*(Math.max(xf, x0-2*CFG.accel) + Math.min(xl, x1+2*CFG.accel));
+      const xi = Math.min(x1, Math.max(x0, mid));
+      const vm = Math.max(0, Math.min(CFG.vmerge, vl + (forced?0:2), vf+2));
+      let m = Infinity;
+      if(i<n){ const g = xl-xi-P.len; if(g < P.s0+slot*vm*P.T) continue; const a = idm(vm, vm-vl, g); if(a<limit) continue; m=Math.min(m,a); }
+      if(i>0){ const g = xi-xf-P.len; if(g < P.s0+slot*vf*P.T) continue; const a = idm(vf, vf-vm, g); if(a<limit) continue; m=Math.min(m,a); }
+      if(m>bestM){bestM=m;best={xi,vm};}
+    }
+    if(!best) return;
+    if(forced) this.forced++;
+    this.insert(best.xi, best.vm, 1, this.released.ta); this.released=null;
+  }
+  step(){
+    const dt = CFG.dt, t = this.t, V = this.veh;
+    const nm = poisson(this.rng, this.o.main(t)/3600*dt); for(let i=0;i<nm;i++) this.mainQ.push(t);
+    const nr = poisson(this.rng, this.o.ramp(t)/3600*dt); for(let i=0;i<nr;i++) this.rampQ.push(t);
+    this.release(); this.merge(); this.entry();
+    const n = V.length;
+    if(n){
+      const acc = new Float64Array(n);
+      for(let i=0;i<n;i++){
+        const c = V[i];
+        if(i<n-1){ const l=V[i+1]; acc[i]=idm(c.v, c.v-l.v, l.x-c.x-P.len); } else acc[i]=idm(c.v,0,Infinity);
+      }
+      for(let i=0;i<n;i++){
+        const c=V[i], a=acc[i]; let vn=c.v+a*dt, dx;
+        if(vn<0){ dx = -0.5*c.v*c.v/Math.min(a,-1e-9); vn=0; } else dx = c.v*dt+0.5*a*dt*dt;
+        c.x+=dx; c.v=vn;
+      }
+      for(let i=n-2;i>=0;i--){ const mx=V[i+1].x-P.len-0.1; if(V[i].x>mx) V[i].x=mx; }
+      while(V.length && V[V.length-1].x>=CFG.L){ const c=V.pop(); this.exits++; this.travelSum += t-c.ta; }
+    }
+    let inDet=0; for(const c of V) if(c.x>=CFG.det0 && c.x<CFG.det1) inDet++;
+    this.detAcc += inDet/((CFG.det1-CFG.det0)/1000); this.detN++;
+    this.k++; this.t = this.k*dt;
+    if(this.k % Math.round(CFG.ctrlInt/dt) === 0){ this.density = this.detAcc/this.detN; this.rate = this.o.ctrl.update(this.density); this.detAcc=0; this.detN=0; }
+    if(this.k % Math.round(CFG.rec/dt) === 0) this.snapshot();
+    this.onRoadTime += V.length*dt; this.queueTime += (this.mainQ.length+this.rampQ.length+(this.released?1:0))*dt;
+  }
+  snapshot(){
+    const cnt = new Uint16Array(this.nCells), vs = new Float64Array(this.nCells);
+    for(const c of this.veh){ const i=Math.min(this.nCells-1, Math.max(0, Math.floor(c.x/CFG.cell))); cnt[i]++; vs[i]+=c.v; }
+    const col = new Float32Array(this.nCells);
+    for(let i=0;i<this.nCells;i++){ if(cnt[i]){ col[i]=vs[i]/cnt[i]; this.samples++; if(col[i]<16.67) this.congested++; } else col[i]=NaN; }
+    this.cols.push(col);
+    const q = this.rampQ.length+(this.released?1:0); if(q>this.maxRampQ) this.maxRampQ=q;
+  }
+  get rampQueue(){ return this.rampQ.length+(this.released?1:0); }
+  get tts(){ return (this.onRoadTime+this.queueTime)/3600; } // veh·h, includes vehicles still on the road
+}
+const controllers = {
+  none: () => ({init:()=>Infinity, update:()=>Infinity, name:'Signal off'}),
+  fixed: r => ({init:()=>r, update:()=>r, name:`Fixed ${r} veh/h`}),
+  alinea: (tgt, K) => { let r=900; return {init:()=>r, update:d=>{ r=Math.min(1800,Math.max(200, r+K*(tgt-d))); return r; }, name:'ALINEA adaptive'}; }
+};
+
+// ---------- view ----------
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function speedColor(v){ // 0..33 m/s → red→yellow→green
+  const u = Math.max(0, Math.min(1, v/33.3));
+  const stops=[[215,48,39],[254,224,139],[26,152,80]];
+  const p = u<0.5 ? [stops[0],stops[1],u*2] : [stops[1],stops[2],(u-0.5)*2];
+  const c = p[0].map((a,i)=>Math.round(a+(p[1][i]-a)*p[2]));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+const NCOLS = CFG.dur/CFG.rec, NCELLS = CFG.L/CFG.cell;
+function makePanel(id, title){
+  const el = document.createElement('section'); el.className='sim';
+  el.innerHTML = `
+    <div class="head"><h2>${title}</h2><span class="signal" id="${id}-sig"><i></i><span id="${id}-sigtxt">—</span></span></div>
+    <canvas class="road" id="${id}-road" width="1200" height="64"></canvas>
+    <div class="axis"><span>0 km · entrance</span><span>3.0 km · on-ramp</span><span>6 km · exit</span></div>
+    <canvas id="${id}-st" width="${NCOLS}" height="${NCELLS*4}" style="image-rendering:pixelated"></canvas>
+    <div class="axis"><span>0 min</span><span>position 0 → 6 km, bottom to top · time →</span><span>90 min</span></div>
+    <div class="kpis">
+      <div class="kpi lift"><div class="n mono" id="${id}-tts">0.0</div><div class="l">Time spent · veh·h</div></div>
+      <div class="kpi"><div class="n mono" id="${id}-cong">0%</div><div class="l">Congested &lt;60 km/h</div></div>
+      <div class="kpi"><div class="n mono" id="${id}-q">0</div><div class="l">Ramp queue · max</div></div>
+      <div class="kpi"><div class="n mono" id="${id}-thr">0</div><div class="l">Exited vehicles</div></div>
+    </div>`;
+  $('panels').appendChild(el);
+  return {id, el, road:$(`${id}-road`).getContext('2d'), st:$(`${id}-st`).getContext('2d'), drawn:0};
+}
+const panels = [makePanel('a','Signal off'), makePanel('b','ALINEA adaptive')];
+
+function drawRoad(pn, sim){
+  const c = pn.road, W=1200, H=64; c.fillStyle=css('--road'); c.fillRect(0,0,W,H);
+  c.strokeStyle=css('--road-line'); c.setLineDash([12,10]); c.lineWidth=1; c.beginPath(); c.moveTo(0,H/2); c.lineTo(W,H/2); c.stroke(); c.setLineDash([]);
+  const x0=CFG.xr/CFG.L*W, x1=(CFG.xr+CFG.accel)/CFG.L*W;
+  c.fillStyle='rgba(217,147,26,.25)'; c.fillRect(x0,H*0.62,x1-x0,H*0.3);
+  c.strokeStyle=css('--accent'); c.beginPath(); c.moveTo(x0,0); c.lineTo(x0,H); c.stroke();
+  for(const v of sim.veh){ c.fillStyle=speedColor(v.v); const px=v.x/CFG.L*W; c.fillRect(px-2, v.o?H*0.36:H*0.30, 5, v.o?14:10); }
+  // ramp queue as stacked dots under the merge
+  const q = sim.rampQueue; c.fillStyle=css('--accent');
+  for(let i=0;i<Math.min(q,40);i++) c.fillRect(x0-6-i*4, H-8, 3, 5);
+  c.font='11px IBM Plex Mono, monospace'; c.fillStyle=css('--accent-ink'); c.textAlign='right';
+  c.fillText(`${q} waiting`, x0-8, H-12);
+  if(sim.mainQ.length){ c.textAlign='left'; c.fillStyle=css('--road-line'); c.fillText(`${sim.mainQ.length} at entrance`, 6, 14); }
+}
+function drawST(pn, sim){
+  const c = pn.st;
+  for(let j=pn.drawn;j<sim.cols.length;j++){
+    const col = sim.cols[j];
+    for(let i=0;i<NCELLS;i++){ const v=col[i]; if(isNaN(v)) continue; c.fillStyle=speedColor(v); c.fillRect(j,(NCELLS-1-i)*4,1,4); }
+  }
+  pn.drawn = sim.cols.length;
+}
+function clearST(pn){ const c=pn.st; c.fillStyle=css('--panel2'); c.fillRect(0,0,NCOLS,NCELLS*4);
+  c.strokeStyle=css('--line'); c.setLineDash([3,3]); c.beginPath(); const y=(NCELLS-CFG.xr/CFG.cell)*4; c.moveTo(0,y); c.lineTo(NCOLS,y); c.stroke(); c.setLineDash([]); pn.drawn=0; }
+function updateKPIs(pn, sim){
+  $(`${pn.id}-tts`).textContent = sim.tts.toFixed(1);
+  $(`${pn.id}-cong`).textContent = (sim.samples? 100*sim.congested/sim.samples:0).toFixed(1)+'%';
+  $(`${pn.id}-q`).textContent = sim.maxRampQ;
+  $(`${pn.id}-thr`).textContent = sim.exits;
+  const sig = $(`${pn.id}-sig`), txt=$(`${pn.id}-sigtxt`);
+  if(!isFinite(sim.rate)){ sig.className='signal'; txt.textContent='no signal'; }
+  else { const go = (sim.t - sim.lastRel) < 1.0; sig.className='signal '+(go?'go':'on'); txt.textContent=`${Math.round(sim.rate)} veh/h · density ${sim.density.toFixed(0)}`; }
+}
+
+// ---------- controls ----------
+let sims = [], running=false, raf=null, last=0;
+const readOpts = () => ({
+  seed:+$('seed').value, main:profile(+$('mb').value, +$('mp').value), ramp:profile(+$('rb').value, +$('rp').value),
+  ctrlKind:$('ctrl').value, fr:+$('fr').value, tgt:+$('tgt').value, gain:+$('gain').value
+});
+function reset(){
+  running=false; $('run').textContent='Run'; if(raf) cancelAnimationFrame(raf);
+  const o = readOpts();
+  const right = o.ctrlKind==='fixed' ? controllers.fixed(o.fr) : controllers.alinea(o.tgt, o.gain);
+  sims = [ new Sim({...o, ctrl:controllers.none()}), new Sim({...o, ctrl:right}) ];
+  panels[1].el.querySelector('h2').textContent = right.name;
+  panels.forEach((p,i)=>{ clearST(p); drawRoad(p,sims[i]); updateKPIs(p,sims[i]); });
+  $('clock').textContent='00:00';
+}
+function frame(now){
+  if(!running) return;
+  const factor = +$('speed').value;
+  const elapsed = Math.min(0.1, (now-last)/1000); last=now;
+  let steps = Math.round(elapsed*factor/CFG.dt);
+  steps = Math.min(steps, 400);
+  for(let s=0;s<steps;s++){ for(const sim of sims){ if(sim.t<CFG.dur) sim.step(); } }
+  panels.forEach((p,i)=>{ drawRoad(p,sims[i]); drawST(p,sims[i]); updateKPIs(p,sims[i]); });
+  const t = sims[0].t; $('clock').textContent = `${String(Math.floor(t/60)).padStart(2,'0')}:${String(Math.floor(t%60)).padStart(2,'0')}`;
+  if(sims[0].t>=CFG.dur){ running=false; $('run').textContent='Done · Reset to rerun'; return; }
+  raf = requestAnimationFrame(frame);
+}
+$('run').addEventListener('click', ()=>{
+  if(sims[0].t>=CFG.dur) return;
+  running=!running; $('run').textContent = running?'Pause':'Run';
+  if(running){ last=performance.now(); raf=requestAnimationFrame(frame); }
+});
+$('reset').addEventListener('click', reset);
+const bind = (id, fmt) => { const upd=()=>{$(id+'Val').textContent=fmt($(id).value)}; $(id).addEventListener('input',upd); upd(); };
+bind('mb', v=>`${v} veh/h`); bind('mp', v=>`${v} veh/h`); bind('rb', v=>`${v} veh/h`); bind('rp', v=>`${v} veh/h`);
+bind('fr', v=>`${v} veh/h`); bind('tgt', v=>`${v} veh/km`); bind('gain', v=>v); bind('speed', v=>`${v}×`);
+$('ctrl').addEventListener('change', ()=>{ const fixed=$('ctrl').value==='fixed'; $('fixedRow').hidden=!fixed; $('tgtRow').hidden=fixed; $('gainRow').hidden=fixed; });
+const mq = window.matchMedia('(prefers-color-scheme: dark)');
+mq.addEventListener('change', ()=>{ panels.forEach((p,i)=>{ const d=sims[i].cols.length; clearST(p); drawST(p,sims[i]); drawRoad(p,sims[i]); }); });
+reset();
+// Autoplay so the first look shows the mechanism, honouring reduced motion.
+if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){ $('run').click(); }
+})();
+</script>
