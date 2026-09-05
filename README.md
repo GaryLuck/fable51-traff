@@ -50,6 +50,17 @@ rest of the run: the discharge rate after breakdown is lower than the
 post-peak demand plus the ramp backlog, so the jam is self-sustaining. The
 adaptive signal holds the downstream density near the target, restores free
 flow by minute 65 and cuts total time spent (queueing included) by **22 %**.
+The size of the saving depends on the random arrival sequence: over seeds 1–3
+it ranges from 10 % to 23 %, with the ordering of the three strategies unchanged.
+
+## Interactive version
+
+`web/merge-point-lab.html` is a self-contained JavaScript port of the same
+model (identical parameters and merge rules; only the random stream differs).
+It runs two simulations side by side, uncontrolled versus the chosen signal, on
+identical arrivals, with sliders for demand, the fixed release rate, and the
+ALINEA target density and gain. Open the file in a browser or publish it as an
+artifact.
 
 A fixed signal tuned for this surge does almost as well, but it is tuned for
 *this* surge. The demand sweep (`--sweep`) shows the adaptive controller
